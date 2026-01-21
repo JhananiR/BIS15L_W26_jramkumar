@@ -1,0 +1,135 @@
+---
+title: "Homework 5"
+author: "Jhanani Ramkumar"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    theme: spacelab
+---
+
+## Instructions
+Answer the following questions and/or complete the exercises in RMarkdown. Please embed all of your code and push the final work to your repository. Your report should be organized, clean, and run free from errors. Remember, you must remove the `#` for any included code chunks to run. Any plots must have appropriate titles and aesthetics.  
+
+## Load the tidyverse
+```{r}
+library("tidyverse")
+options(scipen=999) #turn off scientific notation
+```
+
+## Data
+**Database of vertebrate home range sizes.** 
+Reference: Tamburello N, Cote IM, Dulvy NK (2015) Energy and the scaling of animal space use. The American Naturalist 186(2):196-211. http://dx.doi.org/10.1086/682070.  
+Data: http://datadryad.org/resource/doi:10.5061/dryad.q5j65/1  
+
+**1. Load the data into a new object called `homerange`.**
+```{r}
+homerange <- read_csv("Tamburelloetal_HomeRangeDatabase.csv")
+```
+
+**2. What is the structure of the `homerange` data? Does it have any NA's? Do a quick exploratory analysis of your choice below.**
+```{r}
+glimpse(homerange)
+```
+Yes, this dataset does have 'NA's.
+```{r}
+summary(homerange)
+```
+
+**3. Which animal groups are represented in the data? Make a plot that shows the number in each class.**
+```{r}
+ggplot(data=homerange, 
+       mapping=aes(x=class))+
+  geom_bar(mapping=aes(fill=class))+
+  labs(title="# of Animals in Each Class")
+```
+
+The animal groups that are represented in the data are actinopterygii, aves, mammalia, and reptilia with the Mammalia group having the highest count. 
+
+**4. Are there more carnivores or herbivores represented in the data? Make a plot that shows the number in each trophic guild.**
+```{r}
+ggplot(data=homerange, 
+       mapping=aes(x=trophic.guild))+
+  geom_bar(mapping=aes(fill=trophic.guild))+
+  labs(title="# of Animals in Each Trophic Guild")
+```
+
+There are more carnivores represented in the data. 
+
+**5. Which herbivorous mammals have homeranges greater than 1,000,000 m²? Show only the common name, order, mean homerange size, and mean body mass. Arrange the data in descending order by homerange size and show only the top 10 species.**
+```{r}
+filter(homerange, class=="mammalia", trophic.guild=="herbivore", mean.hra.m2>1000000) %>% 
+  select(common.name, order, mean.hra.m2, mean.mass.g) %>% 
+  arrange(desc(mean.hra.m2)) %>% 
+  slice_max(mean.hra.m2, n=10)
+```
+
+The herbivorous mammals that have homeranges greater than 1,000,000m^2 are Reindeer, African Bush Elephant, Greater Kudu, American Bison, Giraffe, Asian Elephant, Moose, Red Deer, Goat, and Common Eland. 
+
+**6. Which two species have the largest and smallest homerange sizes?**
+```{r}
+select(homerange, common.name, mean.hra.m2) %>%
+  arrange(desc(mean.hra.m2)) %>% 
+  slice_max(mean.hra.m2, n=1)
+```
+
+The species with the largest homerange size is Reindeer (3550830977 m^2). 
+
+```{r}
+select(homerange, common.name, mean.hra.m2) %>%
+  arrange(desc(mean.hra.m2)) %>% 
+  slice_min(mean.hra.m2, n=1)
+```
+
+The species with the lowest homerange size is Rusty Goby (0.03 m^2).
+
+**7. Which carnivorous mammals have the largest homeranges?**
+```{r}
+filter(homerange, class=="mammalia", trophic.guild == "carnivore") %>% 
+  select(class, common.name, order, mean.hra.m2, mean.mass.g) %>% 
+  arrange(desc(mean.hra.m2))
+```
+
+Some carnivorous mammals with the largest homeranges include Cheetah, Leopard, Carcal, Wolverine, Cougar, and etc.
+
+**8. Is there a relationship between body mass and homerange size? Make a scatterplot to show this relationship. Be sure to include appropriate labels and a title.**
+```{r}
+ggplot(data=homerange, 
+       mapping=aes(x=log10.mass, y=log10.hra))+
+  geom_point(mapping=aes(color=class))+
+  geom_smooth(method=lm, se=T)+
+  labs(title="Body Mass (g) vs. Homerange Size (m^2)", x = "Mean Mass (g)", y = "Mean Homerange Size (m^2)")
+```
+
+Yes, there is a relationship between body mass and homerange size. There is a strong, positive correlation between these two variables. As the body mass increases, the homerange size increases. 
+
+**9. Use filter to extract the data for only birds and mammals. Then make a plot that compares the homerange sizes of these two groups. Be sure to include appropriate labels and a title.**
+```{r}
+filter(homerange, class %in% c("aves", "mammalia"))
+```
+
+```{r}
+birds_mammals <- filter(homerange, class %in% c("aves", "mammalia"))
+
+ggplot(data=birds_mammals,
+       mapping=aes(x=class, y=mean.hra.m2))+
+  geom_boxplot(mapping=aes(fill=class))+
+  scale_y_log10()+
+  labs(title="Comparison of Homerange Sizes between Birds and Mammals", x = "Class", y = "Mean Homerange Size (m^2)")
+```
+
+Comparing the medians, the mammals have higher homerange sizes comapred to birds.
+
+**10. Do one additional exploratory analysis of your choice. Before writing the code, write the question you are trying to answer. The question should be biologically meaningful and appropriate for the data. It must include at least one `filter()`, `select()`, and `arrange()`.**
+
+Which carnivorous fish have the smallest body masses? Only show the top 5 species.
+```{r}
+filter(homerange, class=="actinopterygii", trophic.guild == "carnivore") %>% 
+  select(class, common.name, order, mean.mass.g) %>% 
+  arrange(mean.mass.g) %>%
+  slice_min(mean.mass.g, n=5)
+```
+
+The top 5 species of fish that have the smallest body masses are Rusty Goby, Bluebanded Goby, Redspotted Hawkfish, Worm Pipefish, and Atlantic Salmon.
+
+## Knit and Upload
+Please knit your work as an .html file and upload to Canvas. Homework is due before the start of the next lab. No late work is accepted. Make sure to use the formatting conventions of RMarkdown to make your report neat and clean!  
